@@ -1,37 +1,63 @@
 package config
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/coderkamlesh/hypershop_go/config/indexes"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"github.com/coderkamlesh/hypershop_go/internal/models"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
-var DB *mongo.Database
+var DB *gorm.DB
 
 func ConnectDB() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+    // CockroachDB connection string
+    dsn := fmt.Sprintf(
+        "postgresql://%s:%s@%s/%s?sslmode=require",
+        AppConfig.DBUser,
+        AppConfig.DBPassword,
+        AppConfig.DBHost,
+        AppConfig.DBName,
+    )
 
-	clientOptions := options.Client().ApplyURI(AppConfig.MongoURI)
-	client, err := mongo.Connect(clientOptions)
-	if err != nil {
-		log.Fatal("❌ MongoDB connection failed:", err)
-	}
+    var err error
+    DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+        Logger: logger.Default.LogMode(logger.Info),
+        NowFunc: func() time.Time {
+            return time.Now().UTC()
+        },
+    })
 
-	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatal("❌ MongoDB ping failed:", err)
-	}
+    if err != nil {
+        log.Fatal("❌ Postgres connection failed:", err)
+    }
 
-	DB = client.Database(AppConfig.DBName)
-	fmt.Printf("✓ MongoDB Connected to '%s' database!\n", AppConfig.DBName)
+    // Connection pool settings
+    sqlDB, err := DB.DB()
+    if err != nil {
+        log.Fatal("❌ Failed to configure connection pool:", err)
+    }
 
-	// ✅ Create all indexes
-	if err := indexes.CreateAllIndexes(DB); err != nil {
-		log.Printf("⚠️ Warning: Error creating indexes: %v", err)
-	}
+    sqlDB.SetMaxOpenConns(25)
+    sqlDB.SetMaxIdleConns(5)
+    sqlDB.SetConnMaxLifetime(5 * time.Minute)
+
+    fmt.Println("✓ CockroachDB Connected!")
+
+    // Auto migrate tables
+    if err := AutoMigrate(); err != nil {
+        log.Printf("⚠️ Warning: Migration error: %v", err)
+    }
+}
+
+func AutoMigrate() error {
+    return DB.AutoMigrate(
+        &models.User{},
+        &models.UserSession{},
+        &models.UserOtp{},
+        &models.RegistrationOtp{},
+    )
 }

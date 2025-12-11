@@ -1,229 +1,134 @@
+// repository/user_repository.go
 package repository
 
 import (
-	"context"
 	"errors"
 	"time"
 
 	"github.com/coderkamlesh/hypershop_go/internal/models"
 	"github.com/coderkamlesh/hypershop_go/internal/utils"
-	"go.mongodb.org/mongo-driver/v2/bson"          // ✅ v2
-	"go.mongodb.org/mongo-driver/v2/mongo"         // ✅ v2
-	"go.mongodb.org/mongo-driver/v2/mongo/options" // ✅ v2
+	"gorm.io/gorm"
 )
 
 type UserRepository interface {
-	Create(user *models.User) error
-	FindByID(id string) (*models.User, error)
-	FindByMobile(mobile string) (*models.User, error)
-	FindByEmail(email string) (*models.User, error)
-	FindAll(page, pageSize int) ([]*models.User, int64, error)
-	FindByRole(role string, page, pageSize int) ([]*models.User, int64, error)
-	Update(id string, user *models.User) error
-	Delete(id string) error
-	ExistsByMobile(mobile string) (bool, error)
-	ExistsByEmail(email string) (bool, error)
+    Create(user *models.User) error
+    FindByID(id string) (*models.User, error)
+    FindByMobile(mobile string) (*models.User, error)
+    FindByEmail(email string) (*models.User, error)
+    FindAll(page, pageSize int) ([]*models.User, int64, error)
+    Update(id string, user *models.User) error
+    Delete(id string) error
+    ExistsByMobile(mobile string) (bool, error)
+    ExistsByEmail(email string) (bool, error)
 }
 
 type userRepository struct {
-	collection *mongo.Collection
+    db *gorm.DB
 }
 
-func NewUserRepository(db *mongo.Database) UserRepository {
-	return &userRepository{
-		collection: db.Collection("users"),
-	}
+func NewUserRepository(db *gorm.DB) UserRepository {
+    return &userRepository{db: db}
 }
 
-// Create creates a new user
 func (r *userRepository) Create(user *models.User) error {
-	// Generate custom ID
-	user.ID = utils.GenerateUserID()
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
-	user.IsActive = true
-
-	_, err := r.collection.InsertOne(context.Background(), user)
-	return err
+    user.ID = utils.GenerateUserID()
+    user.CreatedAt = time.Now()
+    user.UpdatedAt = time.Now()
+    user.IsActive = true
+    return r.db.Create(user).Error
 }
 
-// FindByID finds user by ID
 func (r *userRepository) FindByID(id string) (*models.User, error) {
-	var user models.User
-	err := r.collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&user)
-
-	if err == mongo.ErrNoDocuments {
-		return nil, errors.New("user not found")
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
+    var user models.User
+    err := r.db.Where("id = ?", id).First(&user).Error
+    if errors.Is(err, gorm.ErrRecordNotFound) {
+        return nil, errors.New("user not found")
+    }
+    return &user, err
 }
 
-// FindByMobile finds user by mobile number
 func (r *userRepository) FindByMobile(mobile string) (*models.User, error) {
-	var user models.User
-	err := r.collection.FindOne(context.Background(), bson.M{"mobile": mobile}).Decode(&user)
-
-	if err == mongo.ErrNoDocuments {
-		return nil, nil // Return nil without error if not found
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
+    var user models.User
+    err := r.db.Where("mobile = ?", mobile).First(&user).Error
+    if errors.Is(err, gorm.ErrRecordNotFound) {
+        return nil, nil
+    }
+    return &user, err
 }
 
-// FindByEmail finds user by email
 func (r *userRepository) FindByEmail(email string) (*models.User, error) {
-	var user models.User
-	err := r.collection.FindOne(context.Background(), bson.M{"email": email}).Decode(&user)
-
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
+    var user models.User
+    err := r.db.Where("email = ?", email).First(&user).Error
+    if errors.Is(err, gorm.ErrRecordNotFound) {
+        return nil, nil
+    }
+    return &user, err
 }
 
-// FindAll gets all users with pagination
 func (r *userRepository) FindAll(page, pageSize int) ([]*models.User, int64, error) {
-	skip := (page - 1) * pageSize
+    var users []*models.User
+    var total int64
 
-	// Count total documents
-	total, err := r.collection.CountDocuments(context.Background(), bson.M{})
-	if err != nil {
-		return nil, 0, err
-	}
+    offset := (page - 1) * pageSize
 
-	// Find with pagination
-	opts := options.Find().
-		SetSkip(int64(skip)).
-		SetLimit(int64(pageSize)).
-		SetSort(bson.D{{Key: "created_at", Value: -1}}) // Latest first
+    if err := r.db.Model(&models.User{}).Count(&total).Error; err != nil {
+        return nil, 0, err
+    }
 
-	cursor, err := r.collection.Find(context.Background(), bson.M{}, opts)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer cursor.Close(context.Background())
+    err := r.db.Offset(offset).Limit(pageSize).
+        Order("created_at DESC").
+        Find(&users).Error
 
-	var users []*models.User
-	if err = cursor.All(context.Background(), &users); err != nil {
-		return nil, 0, err
-	}
-
-	return users, total, nil
+    return users, total, err
 }
 
-// FindByRole finds users by role with pagination
-func (r *userRepository) FindByRole(role string, page, pageSize int) ([]*models.User, int64, error) {
-	skip := (page - 1) * pageSize
-	filter := bson.M{"role": role}
-
-	// Count total
-	total, err := r.collection.CountDocuments(context.Background(), filter)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Find with pagination
-	opts := options.Find().
-		SetSkip(int64(skip)).
-		SetLimit(int64(pageSize)).
-		SetSort(bson.D{{Key: "created_at", Value: -1}})
-
-	cursor, err := r.collection.Find(context.Background(), filter, opts)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer cursor.Close(context.Background())
-
-	var users []*models.User
-	if err = cursor.All(context.Background(), &users); err != nil {
-		return nil, 0, err
-	}
-
-	return users, total, nil
-}
-
-// Update updates user details
 func (r *userRepository) Update(id string, user *models.User) error {
-	user.UpdatedAt = time.Now()
+    user.UpdatedAt = time.Now()
+    
+    result := r.db.Model(&models.User{}).
+        Where("id = ?", id).
+        Updates(map[string]interface{}{
+            "name":       user.Name,
+            "email":      user.Email,
+            "role":       user.Role,
+            "is_active":  user.IsActive,
+            "updated_at": user.UpdatedAt,
+        })
 
-	update := bson.M{
-		"$set": bson.M{
-			"name":       user.Name,
-			"email":      user.Email,
-			"role":       user.Role,
-			"is_active":  user.IsActive,
-			"updated_at": user.UpdatedAt,
-		},
-	}
-
-	result, err := r.collection.UpdateOne(
-		context.Background(),
-		bson.M{"_id": id},
-		update,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	if result.MatchedCount == 0 {
-		return errors.New("user not found")
-	}
-
-	return nil
+    if result.Error != nil {
+        return result.Error
+    }
+    if result.RowsAffected == 0 {
+        return errors.New("user not found")
+    }
+    return nil
 }
 
-// Delete deletes a user (soft delete by setting is_active = false)
 func (r *userRepository) Delete(id string) error {
-	update := bson.M{
-		"$set": bson.M{
-			"is_active":  false,
-			"updated_at": time.Now(),
-		},
-	}
+    result := r.db.Model(&models.User{}).
+        Where("id = ?", id).
+        Updates(map[string]interface{}{
+            "is_active":  false,
+            "updated_at": time.Now(),
+        })
 
-	result, err := r.collection.UpdateOne(
-		context.Background(),
-		bson.M{"_id": id},
-		update,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	if result.MatchedCount == 0 {
-		return errors.New("user not found")
-	}
-
-	return nil
+    if result.Error != nil {
+        return result.Error
+    }
+    if result.RowsAffected == 0 {
+        return errors.New("user not found")
+    }
+    return nil
 }
 
-// ExistsByMobile checks if user exists with given mobile
 func (r *userRepository) ExistsByMobile(mobile string) (bool, error) {
-	count, err := r.collection.CountDocuments(context.Background(), bson.M{"mobile": mobile})
-	if err != nil {
-		return false, err
-	}
-	return count > 0, nil
+    var count int64
+    err := r.db.Model(&models.User{}).Where("mobile = ?", mobile).Count(&count).Error
+    return count > 0, err
 }
 
-// ExistsByEmail checks if user exists with given email
 func (r *userRepository) ExistsByEmail(email string) (bool, error) {
-	count, err := r.collection.CountDocuments(context.Background(), bson.M{"email": email})
-	if err != nil {
-		return false, err
-	}
-	return count > 0, nil
+    var count int64
+    err := r.db.Model(&models.User{}).Where("email = ?", email).Count(&count).Error
+    return count > 0, err
 }

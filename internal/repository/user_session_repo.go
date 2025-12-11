@@ -1,66 +1,70 @@
+// repository/user_session_repository.go
 package repository
 
 import (
-	"context"
+	"errors"
 	"time"
 
 	"github.com/coderkamlesh/hypershop_go/internal/models"
 	"github.com/coderkamlesh/hypershop_go/internal/utils"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
+	"gorm.io/gorm"
 )
 
 type UserSessionRepository interface {
-	Create(session *models.UserSession) error
-	FindByToken(token string) (*models.UserSession, error)
-	UpdateLastUsed(sessionID string) error
-	DeactivateAllByUserID(userID string) error
+    Create(session *models.UserSession) error
+    FindByToken(token string) (*models.UserSession, error)
+    UpdateLastUsed(sessionID string) error
+    DeactivateAllByUserID(userID string) error
 }
 
 type userSessionRepository struct {
-	collection *mongo.Collection
+    db *gorm.DB
 }
 
-func NewUserSessionRepository(db *mongo.Database) UserSessionRepository {
-	return &userSessionRepository{
-		collection: db.Collection("user_sessions"),
-	}
+func NewUserSessionRepository(db *gorm.DB) UserSessionRepository {
+    return &userSessionRepository{db: db}
 }
 
 func (r *userSessionRepository) Create(session *models.UserSession) error {
-	session.ID = utils.GenerateID("SESS")
-	session.CreatedAt = time.Now()
-	session.LastUsedAt = time.Now()
-	session.IsActive = true
-	_, err := r.collection.InsertOne(context.Background(), session)
-	return err
+    session.ID = utils.GenerateID("SESS")
+    session.CreatedAt = time.Now()
+    session.LastUsedAt = time.Now()
+    session.IsActive = true
+    return r.db.Create(session).Error
 }
 
 func (r *userSessionRepository) FindByToken(token string) (*models.UserSession, error) {
-	var session models.UserSession
-	err := r.collection.FindOne(context.Background(), bson.M{"token": token, "is_active": true}).Decode(&session)
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	}
-	return &session, err
+    var session models.UserSession
+    err := r.db.Where("token = ? AND is_active = ?", token, true).First(&session).Error
+    
+    if errors.Is(err, gorm.ErrRecordNotFound) {
+        return nil, nil // Return nil without error if not found
+    }
+    
+    return &session, err
 }
 
 func (r *userSessionRepository) UpdateLastUsed(sessionID string) error {
-	update := bson.M{
-		"$set": bson.M{
-			"last_used_at": time.Now(),
-		},
-	}
-	_, err := r.collection.UpdateOne(context.Background(), bson.M{"_id": sessionID}, update)
-	return err
+    result := r.db.Model(&models.UserSession{}).
+        Where("id = ?", sessionID).
+        Update("last_used_at", time.Now())
+
+    if result.Error != nil {
+        return result.Error
+    }
+    
+    if result.RowsAffected == 0 {
+        return errors.New("session not found")
+    }
+    
+    return nil
 }
 
 func (r *userSessionRepository) DeactivateAllByUserID(userID string) error {
-	update := bson.M{
-		"$set": bson.M{
-			"is_active": false,
-		},
-	}
-	_, err := r.collection.UpdateMany(context.Background(), bson.M{"user_id": userID}, update)
-	return err
+    result := r.db.Model(&models.UserSession{}).
+        Where("user_id = ?", userID).
+        Update("is_active", false)
+
+    // No error if zero rows affected - user might have no sessions
+    return result.Error
 }

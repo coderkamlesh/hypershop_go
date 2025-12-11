@@ -7,13 +7,13 @@ import (
 )
 
 type User struct {
-	ID        string         `bson:"_id" json:"id"`
-	Name      string         `bson:"name" json:"name" binding:"required"`
-	Mobile    string         `bson:"mobile" json:"mobile" binding:"required"`
-	Email     string         `bson:"email" json:"email"`
-	Role      constants.Role `bson:"role" json:"role"`
-	Password  string         `bson:"password" json:"-"`
-	IsActive  bool           `bson:"is_active" json:"is_active"`
-	CreatedAt time.Time      `bson:"created_at" json:"created_at"`
-	UpdatedAt time.Time      `bson:"updated_at" json:"updated_at"`
+    ID        string         `gorm:"primaryKey;type:varchar(50)" json:"id"`
+    Name      string         `gorm:"type:varchar(100);not null" json:"name" binding:"required"`
+    Mobile    string         `gorm:"type:varchar(15);uniqueIndex;not null" json:"mobile" binding:"required"`
+    Email     string         `gorm:"type:varchar(100);uniqueIndex" json:"email"`
+    Role      constants.Role `gorm:"type:varchar(20);default:'customer'" json:"role"`
+    Password  string         `gorm:"type:varchar(255)" json:"-"`
+    IsActive  bool           `gorm:"default:true" json:"is_active"`
+    CreatedAt time.Time      `gorm:"autoCreateTime" json:"created_at"`
+    UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
 }
