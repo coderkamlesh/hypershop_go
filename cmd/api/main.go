@@ -16,7 +16,7 @@ func main() {
 	// 2. Set Gin mode
 	gin.SetMode(config.AppConfig.GinMode)
 
-	// 3. Connect MongoDB
+	// 3. Connect Database
 	config.ConnectDB()
 
 	// 4. Create container (all handlers)

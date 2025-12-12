@@ -5,9 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SetupRoutes configures all application routes
 func SetupRoutes(router *gin.Engine, container *app.Container) {
-	// Health check endpoint
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"lambda":  "runnung",

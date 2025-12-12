@@ -162,14 +162,14 @@ func (s *authService) VerifyConsumerRegistrationOTP(mobile, name, otp, deviceInf
 	}
 
 	// Generate token
-	token, err := utils.GenerateToken(user.ID, string(user.Role))
+	token, err := utils.GenerateToken(user.UserId, string(user.Role))
 	if err != nil {
 		return nil, err
 	}
 
 	// Create session
 	session := &models.UserSession{
-		UserID:     user.ID,
+		UserID:     user.UserId,
 		Token:      token,
 		DeviceInfo: deviceInfo,
 		Source:     source,
@@ -178,13 +178,13 @@ func (s *authService) VerifyConsumerRegistrationOTP(mobile, name, otp, deviceInf
 
 	response := &dto.AuthResponse{
 		Token:  token,
-		UserID: user.ID,
+		UserID: user.UserId,
 		Name:   user.Name,
 		Mobile: user.Mobile,
 		Role:   string(user.Role),
 	}
 
-	log.Printf("User registered successfully: %s", user.ID)
+	log.Printf("User registered successfully: %s", user.UserId)
 
 	return response, nil
 }
@@ -244,7 +244,7 @@ func (s *authService) sendLoginOTP(mobile string, allowedRoles ...constants.Role
 
 		// Update existing OTP
 		existingOtp.OTP = otpValue
-		existingOtp.UserID = user.ID
+		existingOtp.UserID = user.UserId
 		existingOtp.CreatedAt = now
 		existingOtp.ExpiredAt = now.Add(time.Minute * OTP_EXPIRY_MINUTES)
 		existingOtp.AttemptCount = 0
@@ -256,7 +256,7 @@ func (s *authService) sendLoginOTP(mobile string, allowedRoles ...constants.Role
 	} else {
 		// Create new OTP
 		newOtp := &models.UserOtp{
-			UserID:       user.ID,
+			UserID:       user.UserId,
 			Mobile:       mobile,
 			OTP:          otpValue,
 			AttemptCount: 0,
@@ -319,14 +319,14 @@ func (s *authService) VerifyLoginOTP(mobile, otp, deviceInfo, source string) (*d
 	}
 
 	// Generate token
-	token, err := utils.GenerateToken(user.ID, string(user.Role))
+	token, err := utils.GenerateToken(user.UserId, string(user.Role))
 	if err != nil {
 		return nil, err
 	}
 
 	// Create session
 	session := &models.UserSession{
-		UserID:     user.ID,
+		UserID:     user.UserId,
 		Token:      token,
 		DeviceInfo: deviceInfo,
 		Source:     source,
@@ -335,13 +335,13 @@ func (s *authService) VerifyLoginOTP(mobile, otp, deviceInfo, source string) (*d
 
 	response := &dto.AuthResponse{
 		Token:  token,
-		UserID: user.ID,
+		UserID: user.UserId,
 		Name:   user.Name,
 		Mobile: user.Mobile,
 		Role:   string(user.Role),
 	}
 
-	log.Printf("User logged in successfully: %s", user.ID)
+	log.Printf("User logged in successfully: %s", user.UserId)
 
 	return response, nil
 }

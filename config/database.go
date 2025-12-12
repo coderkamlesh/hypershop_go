@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/coderkamlesh/hypershop_go/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -14,50 +13,38 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
-    // CockroachDB connection string
-    dsn := fmt.Sprintf(
-        "postgresql://%s:%s@%s/%s?sslmode=require",
-        AppConfig.DBUser,
-        AppConfig.DBPassword,
-        AppConfig.DBHost,
-        AppConfig.DBName,
-    )
+	// connection string
+	dsn := fmt.Sprintf(
+		"postgresql://%s:%s@%s/%s?sslmode=require",
+		AppConfig.DBUser,
+		AppConfig.DBPassword,
+		AppConfig.DBHost,
+		AppConfig.DBName,
+	)
 
-    var err error
-    DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-        Logger: logger.Default.LogMode(logger.Info),
-        NowFunc: func() time.Time {
-            return time.Now().UTC()
-        },
-    })
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+		NowFunc: func() time.Time {
+			return time.Now().UTC()
+		},
+	})
 
-    if err != nil {
-        log.Fatal("❌ Postgres connection failed:", err)
-    }
+	if err != nil {
+		log.Fatal("❌ Postgres connection failed:", err)
+	}
 
-    // Connection pool settings
-    sqlDB, err := DB.DB()
-    if err != nil {
-        log.Fatal("❌ Failed to configure connection pool:", err)
-    }
+	// Connection pool settings
+	sqlDB, err := DB.DB()
+	if err != nil {
+		log.Fatal("❌ Failed to configure connection pool:", err)
+	}
 
-    sqlDB.SetMaxOpenConns(25)
-    sqlDB.SetMaxIdleConns(5)
-    sqlDB.SetConnMaxLifetime(5 * time.Minute)
+	sqlDB.SetMaxOpenConns(1)
+	sqlDB.SetMaxIdleConns(1)
+	sqlDB.SetConnMaxLifetime(30 * time.Second)
+	sqlDB.SetConnMaxIdleTime(10 * time.Second)
 
-    fmt.Println("✓ CockroachDB Connected!")
+	fmt.Println("✓ DB Connected!")
 
-    // Auto migrate tables
-    if err := AutoMigrate(); err != nil {
-        log.Printf("⚠️ Warning: Migration error: %v", err)
-    }
-}
-
-func AutoMigrate() error {
-    return DB.AutoMigrate(
-        &models.User{},
-        &models.UserSession{},
-        &models.UserOtp{},
-        &models.RegistrationOtp{},
-    )
 }

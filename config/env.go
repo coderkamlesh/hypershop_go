@@ -9,54 +9,50 @@ import (
 )
 
 type Config struct {
-    // ❌ Remove MongoURI
-    // MongoURI  string
-    
-    // ✅ Add CockroachDB credentials
-    DBUser     string
-    DBPassword string
-    DBHost     string
-    
-    DBName     string
-    Port       string
-    GinMode    string
-    JWTSecret  string
-    AWSRegion  string
-    AWSKey     string
-    AWSSecret  string
+
+	// ✅ Add CockroachDB credentials
+	DBUser     string
+	DBPassword string
+	DBHost     string
+
+	DBName    string
+	Port      string
+	GinMode   string
+	JWTSecret string
+	AWSRegion string
+	AWSKey    string
+	AWSSecret string
 }
 
 var AppConfig *Config
 
 func LoadEnv() {
-    // .env load karo
-    if err := godotenv.Load(); err != nil {
-        log.Println("⚠️  No .env file found, using system env variables")
-    }
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠️  No .env file found, using system env variables")
+	}
 
-    AppConfig = &Config{
-        // ✅ CockroachDB configuration
-        DBUser:     getEnv("DB_USER", ""),
-        DBPassword: getEnv("DB_PASSWORD", ""),
-        DBHost:     getEnv("DB_HOST", ""),
-        
-        DBName:     getEnv("DB_NAME", "hypershop"),
-        Port:       getEnv("PORT", "8080"),
-        GinMode:    getEnv("GIN_MODE", "debug"),
-        JWTSecret:  getEnv("JWT_SECRET", "default_secret"),
-        AWSRegion:  getEnv("AWS_REGION", "ap-south-1"),
-        AWSKey:     getEnv("AWS_ACCESS_KEY", ""),
-        AWSSecret:  getEnv("AWS_SECRET_KEY", ""),
-    }
+	AppConfig = &Config{
+		DBUser:     getEnv("DB_USER", ""),
+		DBPassword: getEnv("DB_PASSWORD", ""),
+		DBHost:     getEnv("DB_HOST", ""),
 
-    log.Println("✓ Environment variables loaded")
+		DBName:    getEnv("DB_NAME", "hypershop"),
+		Port:      getEnv("PORT", "8080"),
+		GinMode:   getEnv("GIN_MODE", "debug"),
+		JWTSecret: getEnv("JWT_SECRET", "default_secret"),
+		AWSRegion: getEnv("AWS_REGION", "ap-south-1"),
+		AWSKey:    getEnv("AWS_ACCESS_KEY", ""),
+		AWSSecret: getEnv("AWS_SECRET_KEY", ""),
+	}
+
+	log.Println("✓ Environment variables loaded")
 }
 
 // Helper: default value support
 func getEnv(key, defaultValue string) string {
-    value := os.Getenv(key)
-    if value == "" {
-        return defaultValue
-    }
-    return value
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }
