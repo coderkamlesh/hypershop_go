@@ -63,6 +63,7 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
+	start := time.Now()
 	// ✅ TiDB / MySQL Connection String (DSN)
 	// Format: user:pass@tcp(host:port)/dbname?charset=utf8mb4&parseTime=True&loc=Local&tls=true
 	dsn := fmt.Sprintf(
@@ -95,10 +96,16 @@ func ConnectDB() {
 	// ✅ TiDB Serverless connection handling
 	// Serverless db connections ko jaldi close kar deta hai agar idle ho,
 	// isliye lifetime thoda kam rakha hai.
-	sqlDB.SetMaxOpenConns(10) // Thoda badha diya (1 se 10), concurrency ke liye
-	sqlDB.SetMaxIdleConns(5)
-	sqlDB.SetConnMaxLifetime(5 * time.Minute) 
-	sqlDB.SetConnMaxIdleTime(1 * time.Minute)
+	// Sirf 1 connection open rakho (Lambda concurrency sambhal lega)
+sqlDB.SetMaxOpenConns(1) 
+
+// Idle connection mat rakho (taaki TiDB confuse na ho)
+sqlDB.SetMaxIdleConns(1)
+
+// Connection ko har 2 minute me recycle karo
+sqlDB.SetConnMaxLifetime(2 * time.Minute)
 
 	fmt.Println("✓ Connected to TiDB (MySQL) successfully!")
+	duration := time.Since(start)
+    fmt.Printf("⏱️ DB Connection took: %v\n", duration)
 }
