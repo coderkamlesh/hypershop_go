@@ -43,7 +43,7 @@ jobs:
         # we use || true so job won't fail if permission/feature not applicable
 
       - name: Prepare target folder
-        run: mkdir -p target
+        run: mkdir -p "$ZIP_PATH" || true
 
       - name: Build Go Lambda binary (linux)
         run: |
@@ -54,42 +54,42 @@ jobs:
 
       - name: Zip the bootstrap (create lambda package)
         run: |
-          zip -j ${{ env.ZIP_PATH }} bootstrap
-          ls -lh ${{ env.ZIP_PATH }}
+          mkdir -p "$(dirname "$ZIP_PATH")"
+          zip -j "$ZIP_PATH" bootstrap
+          ls -lh "$ZIP_PATH"
 
       - name: Upload Lambda zip to S3
         run: |
-          aws s3 cp ${{ env.ZIP_PATH }} s3://${{ env.S3_BUCKET }}/${{ env.S3_KEY }}
+          aws s3 cp "$ZIP_PATH" "s3://${S3_BUCKET}/${S3_KEY}"
 
       - name: Update Lambda code and publish
-  run: |
-    set -euo pipefail
+        run: |
+          set -euo pipefail
 
-    VERSION=$(aws lambda update-function-code \
-      --function-name "${FUNCTION_NAME}" \
-      --s3-bucket "${S3_BUCKET}" \
-      --s3-key "${S3_KEY}" \
-      --publish \
-      --query 'Version' \
-      --output text)
+          VERSION=$(aws lambda update-function-code \
+            --function-name "${FUNCTION_NAME}" \
+            --s3-bucket "${S3_BUCKET}" \
+            --s3-key "${S3_KEY}" \
+            --publish \
+            --query 'Version' \
+            --output text)
 
-    echo "Published version: ${VERSION}"
+          echo "Published version: ${VERSION}"
 
-    # If alias exists -> update, else create
-    if aws lambda get-alias --function-name "${FUNCTION_NAME}" --name "${ALIAS_NAME}" >/dev/null 2>&1; then
-      aws lambda update-alias \
-        --function-name "${FUNCTION_NAME}" \
-        --name "${ALIAS_NAME}" \
-        --function-version "${VERSION}"
-      echo "Alias ${ALIAS_NAME} updated to version ${VERSION}"
-    else
-      aws lambda create-alias \
-        --function-name "${FUNCTION_NAME}" \
-        --name "${ALIAS_NAME}" \
-        --function-version "${VERSION}"
-      echo "Alias ${ALIAS_NAME} created for version ${VERSION}"
-    fi
-
+          # If alias exists -> update, else create
+          if aws lambda get-alias --function-name "${FUNCTION_NAME}" --name "${ALIAS_NAME}" >/dev/null 2>&1; then
+            aws lambda update-alias \
+              --function-name "${FUNCTION_NAME}" \
+              --name "${ALIAS_NAME}" \
+              --function-version "${VERSION}"
+            echo "Alias ${ALIAS_NAME} updated to version ${VERSION}"
+          else
+            aws lambda create-alias \
+              --function-name "${FUNCTION_NAME}" \
+              --name "${ALIAS_NAME}" \
+              --function-version "${VERSION}"
+            echo "Alias ${ALIAS_NAME} created for version ${VERSION}"
+          fi
 
       - name: Debug - who am i
         run: |
