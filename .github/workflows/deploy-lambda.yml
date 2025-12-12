@@ -18,7 +18,7 @@ jobs:
       ZIP_PATH: target/hypershop-go-lambda.zip
       FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
       ALIAS_NAME: prod
-      GO_VERSION: "1.23"  # 1.25.5 abhi release nahi hua, use stable version
+      GO_VERSION: "1.25.5"  
 
     steps:
       - name: Checkout repo
