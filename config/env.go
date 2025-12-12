@@ -1,4 +1,3 @@
-// config/env.go
 package config
 
 import (
@@ -9,13 +8,12 @@ import (
 )
 
 type Config struct {
-
-	// ✅ Add CockroachDB credentials
 	DBUser     string
 	DBPassword string
 	DBHost     string
-
-	DBName    string
+	DBPort     string // ✅ Added Port explicitly
+	DBName     string
+    
 	Port      string
 	GinMode   string
 	JWTSecret string
@@ -27,6 +25,7 @@ type Config struct {
 var AppConfig *Config
 
 func LoadEnv() {
+	// Local development ke liye .env load karo
 	if err := godotenv.Load(); err != nil {
 		log.Println("⚠️  No .env file found, using system env variables")
 	}
@@ -35,8 +34,9 @@ func LoadEnv() {
 		DBUser:     getEnv("DB_USER", ""),
 		DBPassword: getEnv("DB_PASSWORD", ""),
 		DBHost:     getEnv("DB_HOST", ""),
+		DBPort:     getEnv("DB_PORT", "4000"), // ✅ Default TiDB port
+		DBName:     getEnv("DB_NAME", "hypershop"),
 
-		DBName:    getEnv("DB_NAME", "hypershop"),
 		Port:      getEnv("PORT", "8080"),
 		GinMode:   getEnv("GIN_MODE", "debug"),
 		JWTSecret: getEnv("JWT_SECRET", "default_secret"),
@@ -48,7 +48,6 @@ func LoadEnv() {
 	log.Println("✓ Environment variables loaded")
 }
 
-// Helper: default value support
 func getEnv(key, defaultValue string) string {
 	value := os.Getenv(key)
 	if value == "" {
