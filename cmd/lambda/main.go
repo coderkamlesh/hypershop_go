@@ -6,7 +6,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin" // ✅ Add this import
+	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/coderkamlesh/hypershop_go/config"
 	"github.com/coderkamlesh/hypershop_go/internal/app"
 	"github.com/coderkamlesh/hypershop_go/internal/http/routes"
