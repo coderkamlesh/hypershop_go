@@ -62,20 +62,34 @@ jobs:
           aws s3 cp ${{ env.ZIP_PATH }} s3://${{ env.S3_BUCKET }}/${{ env.S3_KEY }}
 
       - name: Update Lambda code and publish
-        run: |
-          VERSION=$(aws lambda update-function-code \
-            --function-name "${FUNCTION_NAME}" \
-            --s3-bucket "${S3_BUCKET}" \
-            --s3-key "${S3_KEY}" \
-            --publish \
-            --query 'Version' \
-            --output text)
+  run: |
+    set -euo pipefail
 
-          echo "Published version: ${VERSION}"
+    VERSION=$(aws lambda update-function-code \
+      --function-name "${FUNCTION_NAME}" \
+      --s3-bucket "${S3_BUCKET}" \
+      --s3-key "${S3_KEY}" \
+      --publish \
+      --query 'Version' \
+      --output text)
 
-          # create alias if not exists, else update
-          aws lambda create-alias --function-name "${FUNCTION_NAME}" --name "${ALIAS_NAME}" --function-version "${VERSION" 2>/dev/null || \
-          aws lambda update-alias --function-name "${FUNCTION_NAME}" --name "${ALIAS_NAME}" --function-version "${VERSION"
+    echo "Published version: ${VERSION}"
+
+    # If alias exists -> update, else create
+    if aws lambda get-alias --function-name "${FUNCTION_NAME}" --name "${ALIAS_NAME}" >/dev/null 2>&1; then
+      aws lambda update-alias \
+        --function-name "${FUNCTION_NAME}" \
+        --name "${ALIAS_NAME}" \
+        --function-version "${VERSION}"
+      echo "Alias ${ALIAS_NAME} updated to version ${VERSION}"
+    else
+      aws lambda create-alias \
+        --function-name "${FUNCTION_NAME}" \
+        --name "${ALIAS_NAME}" \
+        --function-version "${VERSION}"
+      echo "Alias ${ALIAS_NAME} created for version ${VERSION}"
+    fi
+
 
       - name: Debug - who am i
         run: |
