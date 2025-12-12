@@ -13,26 +13,26 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      S3_BUCKET: ${{ secrets.LAMBDA_S3_BUCKET }}           # e.g. kamleshdeploy
+      S3_BUCKET: ${{ secrets.LAMBDA_S3_BUCKET }}
       S3_KEY: hypershop/hypershop-go-lambda.zip
       ZIP_PATH: target/hypershop-go-lambda.zip
-      FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}   # e.g. hypershop_go
+      FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
       ALIAS_NAME: prod
-      GO_VERSION: 1.25.5
+      GO_VERSION: "1.23"  # 1.25.5 abhi release nahi hua, use stable version
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}   # store role ARN in secrets
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Disable SnapStart for function (ensure none)
@@ -40,15 +40,11 @@ jobs:
           aws lambda update-function-configuration \
             --function-name "${FUNCTION_NAME}" \
             --snap-start ApplyOn=None || true
-        # we use || true so job won't fail if permission/feature not applicable
-
-      - name: Prepare target folder
-        run: mkdir -p "$ZIP_PATH" || true
 
       - name: Build Go Lambda binary (linux)
         run: |
           export GOOS=linux
-          export GOARCH=amd64       # change to arm64 if you use Graviton
+          export GOARCH=amd64
           export CGO_ENABLED=0
           go build -trimpath -ldflags "-s -w" -o bootstrap ./cmd/lambda
 
