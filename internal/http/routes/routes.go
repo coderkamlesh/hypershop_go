@@ -10,6 +10,7 @@ func SetupRoutes(router *gin.Engine, container *app.Container) {
 	// Health check endpoint
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
+			"lambda":  "runnung",
 			"status":  "ok",
 			"message": "HyperShop API is running",
 		})
