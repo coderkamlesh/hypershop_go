@@ -48,6 +48,19 @@ func init() {
 
 // Handler is the Lambda function handler
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// ⚠️ CHECK: Har request pe ensure karo DB zinda hai
+	// TiDB connection kabhi kabhi drop ho jata hai idle rehne par
+	sqlDB, err := config.DB.DB() // GORM se underlying SQL DB nikalo
+	if err == nil {
+		if err := sqlDB.Ping(); err != nil {
+			log.Println("⚠️ DB Connection lost, reconnecting...")
+			config.ConnectDB() // Reconnect agar ping fail ho
+		}
+	} else {
+		// Agar sqlDB object hi nahi mila
+		config.ConnectDB()
+	}
+
 	// Proxy request to Gin router
 	return ginLambda.ProxyWithContext(ctx, req)
 }
