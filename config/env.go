@@ -11,15 +11,17 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBHost     string
-	DBPort     string // ✅ Added Port explicitly
+	DBPort     string
 	DBName     string
-    
-	Port      string
-	GinMode   string
-	JWTSecret string
-	AWSRegion string
-	AWSKey    string
-	AWSSecret string
+
+	Port       string
+	GinMode    string
+	JWTSecret  string
+	AWSRegion  string
+	AWSKey     string
+	AWSSecret  string
+	TursoToken string
+	TursoUrl   string
 }
 
 var AppConfig *Config
@@ -37,12 +39,14 @@ func LoadEnv() {
 		DBPort:     getEnv("DB_PORT", "4000"), // ✅ Default TiDB port
 		DBName:     getEnv("DB_NAME", "hypershop"),
 
-		Port:      getEnv("PORT", "8080"),
-		GinMode:   getEnv("GIN_MODE", "debug"),
-		JWTSecret: getEnv("JWT_SECRET", "default_secret"),
-		AWSRegion: getEnv("AWS_REGION", "ap-south-1"),
-		AWSKey:    getEnv("AWS_ACCESS_KEY", ""),
-		AWSSecret: getEnv("AWS_SECRET_KEY", ""),
+		Port:       getEnv("PORT", "8080"),
+		GinMode:    getEnv("GIN_MODE", "debug"),
+		JWTSecret:  getEnv("JWT_SECRET", "default_secret"),
+		AWSRegion:  getEnv("AWS_REGION", "ap-south-1"),
+		AWSKey:     getEnv("AWS_ACCESS_KEY", ""),
+		AWSSecret:  getEnv("AWS_SECRET_KEY", ""),
+		TursoToken: getEnv("TURSO_TOKEN", ""),
+		TursoUrl:   getEnv("TURSO_URL", ""),
 	}
 
 	log.Println("✓ Environment variables loaded")
