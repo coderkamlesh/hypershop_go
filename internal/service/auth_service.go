@@ -235,13 +235,6 @@ func (s *authService) sendLoginOTP(mobile string, allowedRoles ...constants.Role
 	otpValue := generateOTP(mobile)
 
 	if existingOtp != nil {
-		// Check rate limiting
-		// secondsSinceLastOtp := int(now.Sub(existingOtp.CreatedAt).Seconds())
-		// if secondsSinceLastOtp < OTP_RATE_LIMIT_SECONDS {
-		// 	secondsLeft := OTP_RATE_LIMIT_SECONDS - secondsSinceLastOtp
-		// 	return fmt.Errorf("please wait %d seconds before requesting a new OTP", secondsLeft)
-		// }
-
 		// Update existing OTP
 		existingOtp.OTP = otpValue
 		existingOtp.UserID = user.UserId
