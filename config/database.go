@@ -16,7 +16,7 @@ func ConnectDB() {
 	start := time.Now()
 
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&tls=true",
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&tls=skip-verify",
 		AppConfig.DBUser,
 		AppConfig.DBPassword,
 		AppConfig.DBHost,
@@ -42,11 +42,11 @@ func ConnectDB() {
 		log.Fatal("Failed to configure connection pool:", err)
 	}
 
-	sqlDB.SetMaxOpenConns(1)
+	sqlDB.SetMaxOpenConns(10)
 
-	sqlDB.SetMaxIdleConns(1)
+	sqlDB.SetMaxIdleConns(5)
 
-	sqlDB.SetConnMaxLifetime(2 * time.Minute)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 	fmt.Println("✓ Connected to MySQL DB successfully!")
 	duration := time.Since(start)
