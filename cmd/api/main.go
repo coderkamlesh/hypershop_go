@@ -27,12 +27,8 @@ func main() {
 	routes.SetupRoutes(router, container)
 
 	// 6. Start server
-	// port := fmt.Sprintf(":%s", config.AppConfig.Port)
-	// fmt.Printf("🚀 Server running on http://localhost%s\n", port)
-	// router.Run(port)
-
-	address := fmt.Sprintf("0.0.0.0:%s", config.AppConfig.Port)
-	fmt.Printf("🚀 Server running on http://%s\n", address)
-	router.Run(address)
+	port := fmt.Sprintf(":%s", config.AppConfig.Port)
+	fmt.Printf("🚀 Server running on http://localhost%s\n", port)
+	router.Run(port)
 
 }
