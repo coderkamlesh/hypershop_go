@@ -38,6 +38,5 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ${{ secrets.EC2_APP_PATH }}
             sudo systemctl restart hypershop
             sudo systemctl status hypershop --no-pager
