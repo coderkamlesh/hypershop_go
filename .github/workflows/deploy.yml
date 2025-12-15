@@ -20,7 +20,7 @@ jobs:
 
       - name: Build Go binary
         run: |
-          GOOS=linux GOARCH=amd64 go build -o hypershop
+          GOOS=linux GOARCH=amd64 go build -o hypershop ./cmd/api
 
       - name: Copy binary to EC2
         uses: appleboy/scp-action@v0.1.7
