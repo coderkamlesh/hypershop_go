@@ -65,5 +65,16 @@ func main() {
 	}
 
 	// 10. Cleanup resources
+	fmt.Println("🧹 Cleaning up resources...")
+
+	// Close database connection
+	if config.DB != nil {
+		sqlDB, _ := config.DB.DB()
+		if sqlDB != nil {
+			sqlDB.Close()
+			fmt.Println("✅ Database connection closed")
+		}
+	}
 	fmt.Println("✅ Server exited gracefully")
+
 }
