@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/coderkamlesh/hypershop_go/internal/app"
+	"github.com/coderkamlesh/hypershop_go/internal/http/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,8 +15,8 @@ func SetupAuthRoutes(v1 *gin.RouterGroup, container *app.Container) {
 	{
 		consumer.POST("/register/requestOtp", container.AuthHandler.RequestConsumerRegistrationOTP)
 		consumer.POST("/register/verifyOtp", container.AuthHandler.VerifyConsumerRegistrationOTP)
-		consumer.POST("/login/requestOtp", container.AuthHandler.RequestConsumerLoginOTP)
-		consumer.POST("/login/verifyOtp", container.AuthHandler.VerifyConsumerLoginOTP)
+		consumer.POST("/login/requestOtp", middleware.ConsumerLoginGuard(), container.AuthHandler.RequestConsumerLoginOTP)
+		consumer.POST("/login/verifyOtp", middleware.ConsumerLoginGuard(), container.AuthHandler.VerifyConsumerLoginOTP)
 	}
 
 	// ========== ADMIN LOGIN ==========

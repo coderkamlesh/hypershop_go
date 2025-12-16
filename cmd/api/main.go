@@ -1,7 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/coderkamlesh/hypershop_go/config"
 	"github.com/coderkamlesh/hypershop_go/internal/app"
@@ -23,12 +30,40 @@ func main() {
 	container := app.NewContainer()
 
 	// 5. Setup router
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Recovery()) // ❗ recommended
 	routes.SetupRoutes(router, container)
 
-	// 6. Start server
+	// 6. Create HTTP server
 	port := fmt.Sprintf(":%s", config.AppConfig.Port)
-	fmt.Printf("🚀 Server running on http://localhost%s\n", port)
-	router.Run(port)
+	srv := &http.Server{
+		Addr:    port,
+		Handler: router,
+	}
 
+	// 7. Start server (non-blocking)
+	go func() {
+		fmt.Printf("🚀 Server running on http://localhost%s\n", port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("❌ listen error: %s\n", err)
+		}
+	}()
+
+	// 8. Listen for shutdown signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	fmt.Println("\n🛑 Shutdown signal received")
+
+	// 9. Graceful shutdown with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("❌ Server forced to shutdown: %v", err)
+	}
+
+	// 10. Cleanup resources
+	fmt.Println("✅ Server exited gracefully")
 }
