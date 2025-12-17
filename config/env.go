@@ -11,9 +11,9 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBHost     string
-	DBPort     string // ✅ Added Port explicitly
+	DBPort     string
 	DBName     string
-    
+
 	Port      string
 	GinMode   string
 	JWTSecret string
@@ -25,19 +25,18 @@ type Config struct {
 var AppConfig *Config
 
 func LoadEnv() {
-	// Local development ke liye .env load karo
 	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️  No .env file found, using system env variables")
+		log.Println(" No .env file found, using system env variables")
 	}
 
 	AppConfig = &Config{
-		DBUser:     getEnv("DB_USER", ""),
-		DBPassword: getEnv("DB_PASSWORD", ""),
-		DBHost:     getEnv("DB_HOST", ""),
-		DBPort:     getEnv("DB_PORT", "4000"), // ✅ Default TiDB port
+		DBUser:     getEnv("DB_USER", "root"),
+		DBPassword: getEnv("DB_PASSWORD", "root"),
+		DBHost:     getEnv("DB_HOST", "localhost"),
+		DBPort:     getEnv("DB_PORT", "3306"),
 		DBName:     getEnv("DB_NAME", "hypershop"),
 
-		Port:      getEnv("PORT", "8080"),
+		Port:      getEnv("PORT", "3333"),
 		GinMode:   getEnv("GIN_MODE", "debug"),
 		JWTSecret: getEnv("JWT_SECRET", "default_secret"),
 		AWSRegion: getEnv("AWS_REGION", "ap-south-1"),

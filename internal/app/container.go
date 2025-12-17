@@ -10,28 +10,36 @@ import (
 // Container holds all application handlers
 type Container struct {
 	AuthHandler *handler.AuthHandler
+	AuthService service.AuthService
+
 	// UserHandler    *handler.UserHandler    // Future
 	// ProductHandler *handler.ProductHandler // Future
 }
 
 // NewContainer initializes all handlers with dependency injection
 func NewContainer() *Container {
-	// Get database instance
+
 	db := config.DB
 
-	// ========== REPOSITORIES ==========
+	// Repositories
 	userRepo := repository.NewUserRepository(db)
 	regOtpRepo := repository.NewRegistrationOtpRepository(db)
 	userOtpRepo := repository.NewUserOtpRepository(db)
 	userSessionRepo := repository.NewUserSessionRepository(db)
 
-	// ========== SERVICES ==========
-	authService := service.NewAuthService(userRepo, regOtpRepo, userOtpRepo, userSessionRepo)
+	// Services
+	authService := service.NewAuthService(
+		userRepo,
+		regOtpRepo,
+		userOtpRepo,
+		userSessionRepo,
+	)
 
-	// ========== HANDLERS ==========
+	// Handlers
 	authHandler := handler.NewAuthHandler(authService)
 
 	return &Container{
 		AuthHandler: authHandler,
+		AuthService: authService, // ✅ IMPORTANT
 	}
 }

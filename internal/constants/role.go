@@ -12,12 +12,10 @@ const (
 	RoleConsumer         Role = "CONSUMER"
 )
 
-// String returns string representation
 func (r Role) String() string {
 	return string(r)
 }
 
-// IsValid checks if role is valid
 func (r Role) IsValid() bool {
 	switch r {
 	case RoleAdmin, RoleCatalogAdmin, RoleSeller, RoleWarehouseManager,

@@ -31,7 +31,8 @@ func main() {
 
 	// 5. Setup router
 	router := gin.New()
-	router.Use(gin.Recovery()) // ❗ recommended
+	router.Use(gin.Recovery())
+	router.Use(gin.Logger())
 	routes.SetupRoutes(router, container)
 
 	// 6. Create HTTP server

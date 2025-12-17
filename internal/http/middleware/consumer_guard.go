@@ -3,24 +3,19 @@ package middleware
 import (
 	"net/http"
 
+	"github.com/coderkamlesh/hypershop_go/internal/http/dto"
 	"github.com/gin-gonic/gin"
 )
 
 func ConsumerLoginGuard() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		clientType := c.GetHeader("X-Client-Type")
 
 		if clientType != "consumer-app" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Invalid client type",
-			})
-			c.Abort() // 🔴 chain yahin stop
+			c.JSON(http.StatusUnauthorized, dto.Failure("Invalid client type"))
+			c.Abort()
 			return
 		}
-
-		// ✅ sab theek hai → aage jaane do
 		c.Next()
 	}
 }

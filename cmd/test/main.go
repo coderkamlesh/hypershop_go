@@ -1,15 +1,24 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"net/http"
 )
 
+func divide(a, b int) (int, error) {
+	if b == 0 {
+		return 0, errors.New("zero se divide nahi kar sakte")
+	}
+	return a / b, nil
+}
+
 func main() {
+	result, err := divide(10, 2)
 
-	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "pong")
-	})
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 
-	http.ListenAndServe(":3334", nil)
+	fmt.Println("Result:", result)
 }
