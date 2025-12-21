@@ -12,7 +12,7 @@ import (
 
 var DB *gorm.DB
 
-func ConnectDB() {
+func ConnectDB() error {
 	start := time.Now()
 
 	dsn := fmt.Sprintf(
@@ -31,24 +31,22 @@ func ConnectDB() {
 			return time.Now().UTC()
 		},
 	})
-
 	if err != nil {
-		log.Fatal("MySQL connection failed:", err)
+		return fmt.Errorf("gorm open failed: %w", err)
 	}
 
-	// Connection pool settings
 	sqlDB, err := DB.DB()
 	if err != nil {
-		log.Fatal("Failed to configure connection pool:", err)
+		return fmt.Errorf("sql DB config failed: %w", err)
 	}
 
 	sqlDB.SetMaxOpenConns(10)
-
 	sqlDB.SetMaxIdleConns(5)
-
 	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
-	fmt.Println("✓ Connected to MySQL DB successfully!")
-	duration := time.Since(start)
-	fmt.Printf("⏱️ DB Connection took: %v\n", duration)
+	log.Println("✓ Connected to MySQL DB successfully!",
+		"timeTaken", time.Since(start),
+	)
+
+	return nil
 }

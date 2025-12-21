@@ -43,7 +43,7 @@ func (h *AuthHandler) VerifyConsumerRegistrationOTP(c *gin.Context) {
 	var req dto.RegistrationOtpVerifyRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.HandleValidationError(c, err) // ✅ Proper validation
+		utils.HandleValidationError(c, err)
 		return
 	}
 

@@ -20,13 +20,18 @@ type Config struct {
 	AWSRegion string
 	AWSKey    string
 	AWSSecret string
+
+	// Cloudinary Config
+	CloudinaryCloudName string
+	CloudinaryAPIKey    string
+	CloudinaryAPISecret string
 }
 
 var AppConfig *Config
 
 func LoadEnv() {
 	if err := godotenv.Load(); err != nil {
-		log.Println(" No .env file found, using system env variables")
+		log.Println("No .env file found, using system env variables")
 	}
 
 	AppConfig = &Config{
@@ -42,6 +47,10 @@ func LoadEnv() {
 		AWSRegion: getEnv("AWS_REGION", "ap-south-1"),
 		AWSKey:    getEnv("AWS_ACCESS_KEY", ""),
 		AWSSecret: getEnv("AWS_SECRET_KEY", ""),
+
+		CloudinaryCloudName: getEnv("CLOUDINARY_CLOUD_NAME", ""),
+		CloudinaryAPIKey:    getEnv("CLOUDINARY_API_KEY", ""),
+		CloudinaryAPISecret: getEnv("CLOUDINARY_API_SECRET", ""),
 	}
 
 	log.Println("✓ Environment variables loaded")

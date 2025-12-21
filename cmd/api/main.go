@@ -23,8 +23,14 @@ func main() {
 	// 2. Set Gin mode
 	gin.SetMode(config.AppConfig.GinMode)
 
-	// 3. Connect Database
-	config.ConnectDB()
+	// 3.load config
+	if err := config.ConnectDB(); err != nil {
+		log.Fatal("Database startup failed:", err)
+	}
+
+	if err := config.SetupCloudinary(); err != nil {
+		log.Fatal("Failed to setup Cloudinary:", err)
+	}
 
 	// 4. Create container (all handlers)
 	container := app.NewContainer()

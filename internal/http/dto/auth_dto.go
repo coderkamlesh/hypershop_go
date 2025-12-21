@@ -3,7 +3,7 @@ package dto
 // ============ REQUEST DTOs ============
 
 type RegistrationOtpRequest struct {
-	Mobile string `json:"mobile" binding:"required,len=10,numeric" validate:"required"`
+	Mobile string `json:"mobile" binding:"required,len=10,numeric"`
 }
 
 type RegistrationOtpVerifyRequest struct {
